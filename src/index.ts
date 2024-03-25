@@ -1,42 +1,42 @@
 import { serve } from "@hono/node-server"
-import { zValidator } from "@hono/zod-validator"
 import { Hono } from "hono"
-import { z } from "zod"
-import fs from "fs"
-import { v4 as uuid } from "uuid"
-import path from "path"
+import { cache } from "hono/cache"
+import { cors } from "hono/cors"
+import { logger } from "hono/logger"
+import { prettyJSON } from "hono/pretty-json"
+import recognizerRoutes from "@/routes/recognizer"
+import serviceRoutes from "@/routes/services"
+import { config as loadEnvironment } from "dotenv"
 
-const app = new Hono()
+loadEnvironment()
 
-app.get("/", (c) => {
-  return c.text("Hello Hono!")
-})
+export type Env = {
+  RECOGNIZER_HOST_URL: string
+}
 
-app.post(
-  "/capture",
-  zValidator(
-    "json",
-    z.object({
-      file: z.string({
-        required_error: "A base64 file must be passed.",
-      }),
-    })
-  ),
-  (c) => {
-    const body = c.req.valid("json")
-    const buffer: Buffer = Buffer.from(body.file, "base64")
+const app = new Hono<{ Bindings: Env }>({ strict: false })
 
-    const id = uuid()
+app.use("*", prettyJSON())
+app.use("*", cors())
 
-    if (!fs.existsSync(path.join(process.cwd(), "temp")))
-      fs.mkdirSync(path.join(process.cwd(), "temp"))
+if (process.env.NODE_ENV === "development") app.use("*", logger())
 
-    fs.writeFileSync(path.join(process.cwd(), "temp", id + ".png"), buffer)
-    console.log(`File has been saved: ${id}`)
-
-    return c.text(`File has been saved: ${id}`)
-  }
+app.get("/", (c) =>
+  c.json({
+    status: "stable",
+    timestamp: Date.now(),
+  })
 )
+app.route("/recognizer", recognizerRoutes)
+app.route("/services", serviceRoutes)
+
+// app.get(
+//   "*",
+//   cache({
+//     cacheName: "final-masquerade-app",
+//     cacheControl: "max-age=7200",
+//   })
+// )
 
 const port = 3000
 console.log(`Server is running on http://localhost:${port}/`)
