@@ -4,11 +4,20 @@ import { cache } from "hono/cache"
 import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 import { prettyJSON } from "hono/pretty-json"
-import recognizerRoutes from "@/routes/recognizer"
-import serviceRoutes from "@/routes/services"
+import recognizerRouter from "@/routes/recognizer"
+import authRouter from "@/routes/auth"
 import { config as loadEnvironment } from "dotenv"
+import SmeeClient from "smee-client"
 
 loadEnvironment()
+
+if (process.env.NODE_ENV === "development") {
+  new SmeeClient({
+    source: process.env.WEBHOOK_PROXY_URL!,
+    target: process.env.WEBHOOK_LOCAL_HANDLER!,
+    logger: console,
+  }).start()
+}
 
 export type Env = {
   RECOGNIZER_HOST_URL: string
@@ -27,16 +36,17 @@ app.get("/", (c) =>
     timestamp: Date.now(),
   })
 )
-app.route("/recognizer", recognizerRoutes)
-app.route("/services", serviceRoutes)
+app.route("/recognizer", recognizerRouter)
+app.route("/auth", authRouter)
 
-// app.get(
-//   "*",
-//   cache({
-//     cacheName: "final-masquerade-app",
-//     cacheControl: "max-age=7200",
-//   })
-// )
+app.get(
+  "*",
+  cache({
+    cacheName: "final-masquerade-app",
+    cacheControl: "max-age=7200",
+    wait: true,
+  })
+)
 
 const port = 3000
 console.log(`Server is running on http://localhost:${port}/`)
