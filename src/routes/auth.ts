@@ -1,8 +1,5 @@
 import prisma from "@/lib/prisma"
-import { zValidator } from "@hono/zod-validator"
 import { Hono } from "hono"
-import { StatusCode } from "hono/utils/http-status"
-import { z } from "zod"
 import { Webhook } from "svix"
 
 const authRouter = new Hono()
@@ -66,7 +63,7 @@ authRouter.post("/webhook", async (c) => {
 
   return c.json({
     success: true,
-    message: "Webhook received",
+    message: "User is created.",
   })
 })
 

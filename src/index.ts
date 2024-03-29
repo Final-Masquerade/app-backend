@@ -6,6 +6,7 @@ import { logger } from "hono/logger"
 import { prettyJSON } from "hono/pretty-json"
 import recognizerRouter from "@/routes/recognizer"
 import authRouter from "@/routes/auth"
+import userRouter from "@/routes/user"
 import { config as loadEnvironment } from "dotenv"
 import SmeeClient from "smee-client"
 
@@ -36,8 +37,9 @@ app.get("/", (c) =>
     timestamp: Date.now(),
   })
 )
-app.route("/recognizer", recognizerRouter)
 app.route("/auth", authRouter)
+app.route("/user", userRouter)
+app.route("/recognizer", recognizerRouter)
 
 app.get(
   "*",
