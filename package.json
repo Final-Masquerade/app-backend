@@ -5,6 +5,8 @@
     "studio": "prisma studio"
   },
   "dependencies": {
+    "@clerk/backend": "^0.30.3",
+    "@hono/clerk-auth": "^1.0.1",
     "@hono/node-server": "^1.8.2",
     "@hono/zod-validator": "^0.2.0",
     "@prisma/client": "^5.11.0",

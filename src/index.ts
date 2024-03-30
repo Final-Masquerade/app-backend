@@ -41,14 +41,14 @@ app.route("/auth", authRouter)
 app.route("/user", userRouter)
 app.route("/recognizer", recognizerRouter)
 
-app.get(
-  "*",
-  cache({
-    cacheName: "final-masquerade-app",
-    cacheControl: "max-age=7200",
-    wait: true,
-  })
-)
+// app.get(
+//   "*",
+//   cache({
+//     cacheName: "final-masquerade-app",
+//     cacheControl: "max-age=7200",
+//     wait: true,
+//   })
+// )
 
 const port = 3000
 console.log(`Server is running on http://localhost:${port}/`)
