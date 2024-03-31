@@ -53,6 +53,7 @@ userRouter.post(
 
     const id = auth.userId
     const body = c.req.valid("json")
+    console.log(body)
 
     try {
       await prisma.user.update({
@@ -115,6 +116,8 @@ userRouter.put("/updateSheetStatus", createXMLValidator, async (c) => {
       },
       403 as StatusCode
     )
+
+  console.log(body.status)
 
   switch (body.status) {
     case SheetStatus.FAILED: {
