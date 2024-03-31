@@ -7,5 +7,8 @@ export const captureValidator = zValidator(
     file: z.string({
       required_error: "A base64 file must be passed.",
     }),
+    user_id: z.string({
+      required_error: "A user id must be passed.",
+    }),
   })
 )

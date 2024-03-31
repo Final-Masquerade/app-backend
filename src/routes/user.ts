@@ -59,15 +59,28 @@ userRouter.post(
         where: { id },
         data: {
           sheets: {
-            create: {
-              id: body.id,
-              name: body.name,
-              composer: body.composer,
-              date: body.date,
-              difficulty: body.difficulty,
-              key: body.key,
-              status: SheetStatus.PROCESSING,
-              tempo: body.tempo,
+            upsert: {
+              where: {
+                id: body.id,
+              },
+              create: {
+                id: body.id,
+                name: body.name,
+                composer: body.composer,
+                date: body.date,
+                difficulty: body.difficulty,
+                key: body.key,
+                status: SheetStatus.PROCESSING,
+                tempo: body.tempo,
+              },
+              update: {
+                name: body.name,
+                composer: body.composer,
+                date: body.date,
+                difficulty: body.difficulty,
+                key: body.key,
+                tempo: body.tempo,
+              },
             },
           },
         },
@@ -102,6 +115,72 @@ userRouter.put("/updateSheetStatus", createXMLValidator, async (c) => {
       },
       403 as StatusCode
     )
+
+  switch (body.status) {
+    case SheetStatus.FAILED: {
+      await prisma.user.update({
+        where: {
+          id: body.user_id,
+        },
+        data: {
+          sheets: {
+            upsert: {
+              where: {
+                id: body.job_id,
+              },
+              update: {
+                status: SheetStatus.FAILED,
+              },
+              create: {
+                id: body.job_id,
+                name: "",
+                status: SheetStatus.FAILED,
+              },
+            },
+          },
+        },
+      })
+      break
+    }
+
+    case SheetStatus.SUCCESS: {
+      await prisma.user.update({
+        where: {
+          id: body.user_id,
+        },
+        data: {
+          sheets: {
+            upsert: {
+              where: {
+                id: body.job_id,
+              },
+              update: {
+                status: SheetStatus.SUCCESS,
+                data: {
+                  create: {
+                    xml: body.xml,
+                  },
+                },
+              },
+              create: {
+                id: body.job_id,
+                name: "",
+                status: SheetStatus.SUCCESS,
+                data: {
+                  create: {
+                    xml: body.xml,
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+      break
+    }
+    default:
+      break
+  }
 
   return c.json({ message: "Updated" })
 })

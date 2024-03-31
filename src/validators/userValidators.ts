@@ -11,7 +11,7 @@ export const createSheetValidator = zValidator(
     name: z.string({ required_error: "Provide a name for the sheet." }).min(3),
     tempo: z.number().optional(),
     composer: z.string().optional(),
-    date: z.date().optional(),
+    date: z.number().optional(),
     key: z.nativeEnum(Key).optional(),
     difficulty: z.nativeEnum(Difficulty).optional(),
   })
@@ -21,6 +21,8 @@ export const createXMLValidator = zValidator(
   "json",
   z.object({
     status: z.nativeEnum(SheetStatus),
+    user_id: z.string(),
+    job_id: z.string(),
     xml: z.string(),
   })
 )

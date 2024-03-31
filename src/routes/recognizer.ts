@@ -20,7 +20,7 @@ recognizerRouter.post("/capture", captureValidator, async (c) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ file }),
+    body: JSON.stringify({ file, user_id: body.user_id }),
   })
 
   if (!res.ok) return c.json({}, res.status as StatusCode)

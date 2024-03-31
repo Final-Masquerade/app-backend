@@ -30,7 +30,7 @@ model Sheet {
   name       String
   tempo      Int         @default(120)
   composer   String?
-  date       DateTime?
+  date       Int?
   key        Key?
   difficulty Difficulty?
   status     SheetStatus @default(PROCESSING)
