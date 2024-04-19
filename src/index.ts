@@ -35,7 +35,7 @@ app.get("/", (c) =>
   c.json({
     status: "stable",
     timestamp: Date.now(),
-  })
+  }),
 )
 app.route("/auth", authRouter)
 app.route("/user", userRouter)

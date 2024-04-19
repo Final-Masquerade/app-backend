@@ -10,6 +10,9 @@ import { StatusCode } from "hono/utils/http-status"
 
 const userRouter = new Hono()
 
+/**
+ *  Returns all sheet metadata.
+ */
 userRouter.get("/sheets", clerkMiddleware(), async (c) => {
   const auth = getAuth(c)
 
@@ -23,7 +26,14 @@ userRouter.get("/sheets", clerkMiddleware(), async (c) => {
       id,
     },
     select: {
-      sheets: true,
+      sheets: {
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          status: true,
+        },
+      },
     },
   })
 
@@ -32,7 +42,7 @@ userRouter.get("/sheets", clerkMiddleware(), async (c) => {
       {
         message: `Cannot find user ${id}.`,
       },
-      404
+      404,
     )
 
   return c.json({
@@ -41,6 +51,9 @@ userRouter.get("/sheets", clerkMiddleware(), async (c) => {
   })
 })
 
+/**
+ *  Creates sheet metadata.
+ */
 userRouter.post(
   "/createSheet",
   createSheetValidator,
@@ -53,7 +66,6 @@ userRouter.post(
 
     const id = auth.userId
     const body = c.req.valid("json")
-    console.log(body)
 
     try {
       await prisma.user.update({
@@ -89,7 +101,7 @@ userRouter.post(
     } catch (error) {
       return c.json(
         { message: "Error in creating sheet.", error },
-        500 as StatusCode
+        500 as StatusCode,
       )
     }
 
@@ -97,11 +109,14 @@ userRouter.post(
       {
         message: `Created the sheet '${body.name}'.`,
       },
-      201 as StatusCode
+      201 as StatusCode,
     )
-  }
+  },
 )
 
+/**
+ *  Updates sheet metadata.
+ */
 userRouter.put("/updateSheetStatus", createXMLValidator, async (c) => {
   const secret = c.req.header("Authorization")
   const body = c.req.valid("json")
@@ -114,7 +129,7 @@ userRouter.put("/updateSheetStatus", createXMLValidator, async (c) => {
         message:
           "The provided secret is not correct. Only recognizer microservice can update sheets.",
       },
-      403 as StatusCode
+      403 as StatusCode,
     )
 
   console.log(body.status)
@@ -187,5 +202,73 @@ userRouter.put("/updateSheetStatus", createXMLValidator, async (c) => {
 
   return c.json({ message: "Updated" })
 })
+
+userRouter.get("/sheet/:id", clerkMiddleware(), async (c) => {
+  const auth = getAuth(c)
+
+  if (!auth || !auth.userId)
+    return c.json(
+      { message: "Please sign in to retrieve sheet metadata." },
+      401,
+    )
+
+  const { userId } = auth
+  const { id } = c.req.param()
+
+  const sheet = await prisma.sheet.findUnique({
+    where: {
+      id,
+      creatorId: userId,
+    },
+  })
+
+  if (!sheet)
+    return c.json(
+      {
+        message: `Cannot find sheet ${id}.`,
+      },
+      404,
+    )
+
+  return c.json({ ...sheet })
+})
+
+userRouter.delete(
+  "/sheet/:id",
+  /* clerkMiddleware(),*/ async (c) => {
+    // const auth = getAuth(c)
+
+    // if (!auth || !auth.userId)
+    //   return c.json({ message: "Please sign in to delete sheet." }, 401)
+
+    // const { userId } = auth
+    const { id } = c.req.param()
+
+    const deleteData = prisma.sheetXML.deleteMany({
+      where: {
+        metaId: id,
+      },
+    })
+
+    const deleteSheet = prisma.sheet.delete({
+      where: {
+        id,
+        // creatorId: userId,
+      },
+    })
+
+    try {
+      const transaction = await prisma.$transaction([deleteData, deleteSheet])
+      return c.json({ ...transaction })
+    } catch {
+      return c.json(
+        {
+          message: `Cannot find and delete sheet ${id}.`,
+        },
+        404,
+      )
+    }
+  },
+)
 
 export default userRouter
